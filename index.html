@@ -1,0 +1,338 @@
+﻿<!doctype html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ЖеткізПро — жеткізуді басқару жүйесі</title>
+<meta name="description" content="ЖеткізПро: тапсырыс, курьер, маршрут және шығынды бір жүйеде басқаратын Windows бағдарламасы. AHP, TOPSIS және жасанды интеллект.">
+<link rel="icon" href="img/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Unbounded:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #F3F6FB;
+  --white: #FFFFFF;
+  --ink: #0F2347;
+  --ink-2: #44506A;
+  --line: #D9E0EC;
+  --blue: #2563EB;
+  --blue-deep: #1A47B8;
+  --green: #16A34A;
+  --amber: #E89B2C;
+  --water: #BCD4EF;
+  --display: "Unbounded", "Segoe UI", sans-serif;
+  --text: "Golos Text", "Segoe UI", sans-serif;
+  --measure: 62ch;
+  --gutter: clamp(16px, 4vw, 48px);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.6 var(--text); -webkit-font-smoothing: antialiased; }
+img { max-width: 100%; height: auto; display: block; }
+a { color: var(--blue); }
+:focus-visible { outline: 3px solid var(--amber); outline-offset: 3px; border-radius: 6px; }
+.wrap { max-width: 1200px; margin: 0 auto; padding: 0 var(--gutter); }
+
+/* Шапка */
+.top { display: flex; align-items: center; justify-content: space-between; padding: 22px 0; }
+.brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--ink); }
+.brand img { width: 40px; height: 40px; border-radius: 10px; }
+.brand b { font: 700 19px/1 var(--display); letter-spacing: -0.01em; }
+.top nav { display: flex; gap: 28px; }
+.top nav a { color: var(--ink-2); text-decoration: none; font-weight: 500; }
+.top nav a:hover { color: var(--ink); }
+
+/* Герой */
+.hero { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: 48px; align-items: center; padding: 40px 0 64px; }
+h1 { font: 700 clamp(32px, 3.6vw, 50px)/1.1 var(--display); letter-spacing: -0.03em; margin: 0 0 22px; max-width: 16ch; }
+.lead { font-size: 19px; color: var(--ink-2); max-width: 40ch; margin: 0 0 32px; }
+.download { display: inline-flex; align-items: center; gap: 14px; background: var(--blue); color: var(--white); text-decoration: none;
+  padding: 18px 26px 18px 22px; border-radius: 14px; font: 600 18px/1.2 var(--text); box-shadow: 0 10px 30px -12px rgba(37, 99, 235, .7);
+  transition: background .15s, transform .15s; }
+.download:hover { background: var(--blue-deep); }
+.download:active { transform: translateY(1px); }
+.download svg { width: 26px; height: 26px; flex: none; }
+.download small { display: block; font-weight: 400; font-size: 14px; opacity: .85; margin-top: 3px; }
+.facts { margin: 18px 0 0; color: var(--ink-2); font-size: 15px; }
+
+/* Карта */
+.map-box { position: relative; }
+.map { width: 100%; height: auto; overflow: hidden; border-radius: 18px; background: #E6ECF5; }
+.map .land { fill: var(--white); stroke: #9AA8C0; stroke-width: 1.2; stroke-linejoin: round; }
+.map .water { fill: var(--water); }
+.map .river { fill: none; stroke: #CFE0F3; stroke-width: 1; }
+.map .city { fill: var(--white); stroke: #4B5B73; stroke-width: 1.3; }
+.map .city.big { stroke: var(--ink); stroke-width: 2; }
+.map .label { font: 500 8.5px var(--text); fill: #374151; }
+.map .label.big { font-weight: 600; font-size: 10.5px; fill: var(--ink); }
+.map .route { fill: none; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1;
+  animation: draw 1.1s cubic-bezier(.6, 0, .2, 1) forwards; animation-delay: calc(.35s + var(--i) * .18s); }
+.map .route.go { stroke: var(--green); }
+.map .route.load { stroke: var(--blue); }
+.map .route.late { stroke: var(--amber); }
+.map .route.plan { stroke: #8B95A7; stroke-width: 2; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 14px; font-size: 14px; color: var(--ink-2); }
+.legend span::before { content: ""; display: inline-block; width: 18px; height: 3px; border-radius: 2px; margin-right: 8px; vertical-align: middle; background: currentColor; }
+.legend .go { color: var(--green); }
+.legend .load { color: var(--blue); }
+.legend .late { color: var(--amber); }
+.legend span { color: var(--ink-2); }
+.legend span::before { background: var(--c); }
+
+/* Скриншот в окне */
+.window { background: var(--white); border-radius: 14px; box-shadow: 0 40px 80px -40px rgba(15, 35, 71, .45), 0 0 0 1px var(--line); overflow: hidden; }
+.window .bar { display: flex; align-items: center; gap: 10px; height: 38px; padding: 0 14px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--ink-2); }
+.window .bar img { width: 18px; height: 18px; border-radius: 4px; }
+.window .bar i { margin-left: auto; width: 46px; height: 10px; background: linear-gradient(90deg, #C5CCD9 0 10px, transparent 10px 18px, #C5CCD9 18px 28px, transparent 28px 36px, #C5CCD9 36px); }
+.showcase { padding-bottom: 96px; }
+
+/* Разделы */
+section h2 { font: 700 clamp(26px, 3vw, 38px)/1.15 var(--display); letter-spacing: -0.02em; margin: 0 0 16px; }
+section p { max-width: var(--measure); }
+.feature { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: 48px; align-items: center; padding: 56px 0; border-top: 1px solid var(--line); }
+.feature:nth-of-type(even) { grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); }
+.feature:nth-of-type(even) .text { order: 2; }
+.feature h3 { font: 700 24px/1.2 var(--display); letter-spacing: -0.015em; margin: 0 0 12px; }
+.feature p { color: var(--ink-2); margin: 0 0 12px; }
+.feature ul { margin: 0; padding-left: 20px; color: var(--ink-2); }
+.feature li { margin: 4px 0; }
+.feature .window { border-radius: 10px; }
+
+/* Установка */
+.install { background: var(--ink); color: #E6ECF7; padding: 88px 0; margin-top: 40px; }
+.install h2 { color: var(--white); }
+.install p { color: #B7C3DA; }
+.steps { list-style: none; margin: 40px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; counter-reset: step; }
+.steps li { counter-increment: step; border-top: 2px solid #34507F; padding-top: 18px; }
+.steps li::before { content: counter(step); display: block; font: 700 40px/1 var(--display); color: var(--amber); margin-bottom: 12px; }
+.steps b { color: var(--white); display: block; margin-bottom: 6px; font-size: 18px; }
+.steps p { margin: 0; color: #B7C3DA; font-size: 16px; }
+.note { margin-top: 40px; padding: 18px 20px; border-left: 3px solid var(--amber); background: rgba(232, 155, 44, .1); color: #E6ECF7; max-width: 70ch; }
+.install .download { margin-top: 36px; }
+
+/* Демо-логины */
+.logins { padding: 88px 0 40px; }
+table { border-collapse: collapse; width: 100%; max-width: 820px; margin-top: 24px; font-size: 16px; }
+th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+th { font-weight: 600; color: var(--ink-2); }
+code { font: 500 15px/1 "Cascadia Mono", Consolas, monospace; background: var(--white); border: 1px solid var(--line); padding: 4px 7px; border-radius: 6px; color: var(--ink); }
+.req { padding: 40px 0 88px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 48px; }
+.req ul { margin: 0; padding-left: 20px; color: var(--ink-2); }
+.req h3 { font: 700 20px/1.2 var(--display); margin: 0 0 12px; }
+footer { border-top: 1px solid var(--line); padding: 28px 0 40px; color: var(--ink-2); font-size: 15px; }
+
+@media (max-width: 900px) {
+  .hero, .feature, .feature:nth-of-type(even), .req { grid-template-columns: 1fr; }
+  .feature:nth-of-type(even) .text { order: 0; }
+  .steps { grid-template-columns: 1fr; }
+  .top nav { display: none; }
+  .hero { padding-top: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .map .route { animation: none; stroke-dashoffset: 0; }
+  html { scroll-behavior: auto; }
+}
+</style>
+</head>
+<body>
+
+<header class="wrap top">
+  <a class="brand" href="#"><img src="img/icon.png" alt=""><b>ЖеткізПро</b></a>
+  <nav aria-label="Негізгі мәзір">
+    <a href="#features">Мүмкіндіктер</a>
+    <a href="#install">Орнату</a>
+    <a href="#logins">Кіру</a>
+  </nav>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <div>
+      <h1>Тапсырыс, курьер, маршрут және шығын бір бағдарламада</h1>
+      <p class="lead">Қазақстан бойынша жеткізуді басқаруға арналған Windows бағдарламасы. Курьерді AHP мен TOPSIS әдістері таңдайды, ал жасанды интеллект кешігу қаупін алдын ала көрсетеді.</p>
+      <a class="download" href="https://github.com/omarselbai2006-jpg/zhetkizpro/releases/download/v1.0/ZhetkizPro-Setup-1.0.exe" download>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+        <span>Windows үшін жүктеу<small>Нұсқа 1.0, 81 МБ, Windows 10 және 11</small></span>
+      </a>
+      <p class="facts">Интернетсіз жұмыс істейді. Әкімші құқығы қажет емес.</p>
+    </div>
+    <div class="map-box">
+<!--MAP-->
+<svg class="map" viewBox="0 0 301 156" role="img" aria-label="Қазақстан картасы, жеткізу маршруттарымен">
+<path class="water" d="M-117.1,76.0 L-10.0,86.0 L24.8,94.0 L28.1,92.0 L36.8,88.0 L42.8,88.0 L50.2,90.0 L50.9,97.0 L49.5,104.0 L36.8,105.0 L38.1,112.0 L32.1,112.0 L35.5,116.0 L38.8,126.0 L42.8,129.0 L46.8,130.0 L49.5,133.0 L46.8,140.0 L48.8,158.0 L50.2,278.0 L-117.1,278.0 Z"/>
+<path class="land" d="M24.8,94.0 L20.7,91.0 L22.8,87.0 L18.1,81.0 L12.0,81.0 L10.7,75.0 L6.7,74.0 L10.0,68.0 L8.7,64.0 L13.4,57.0 L18.1,59.0 L22.1,52.0 L20.7,48.0 L26.1,47.0 L32.8,44.0 L35.5,41.0 L40.8,43.0 L47.5,44.0 L52.9,43.0 L57.5,47.0 L61.6,49.0 L68.3,52.0 L73.6,47.0 L78.3,48.0 L83.6,47.0 L87.7,47.5 L93.7,52.0 L97.0,49.5 L103.7,50.0 L107.1,45.0 L100.4,42.0 L97.0,38.0 L103.0,34.0 L102.4,30.5 L108.4,29.0 L111.1,27.0 L105.1,25.0 L103.7,22.0 L105.1,19.0 L110.4,18.0 L117.1,16.0 L127.1,14.5 L131.8,14.5 L133.8,12.0 L143.9,9.5 L151.9,8.0 L157.2,4.5 L165.3,6.5 L169.3,5.0 L172.0,11.0 L170.6,16.0 L177.3,16.0 L181.3,17.0 L187.4,19.0 L186.7,23.0 L193.4,22.0 L197.4,20.0 L207.4,16.0 L210.1,14.0 L207.4,19.0 L216.8,25.0 L224.2,35.0 L231.5,49.0 L235.5,45.0 L240.2,48.3 L250.9,48.0 L256.9,49.5 L259.6,55.5 L264.3,57.5 L268.3,62.0 L272.3,63.0 L276.4,60.0 L279.7,66.0 L276.4,67.0 L269.0,74.0 L268.3,86.0 L266.3,87.5 L250.9,86.0 L246.2,103.0 L248.2,105.0 L243.6,105.0 L231.5,108.0 L233.5,112.0 L233.5,119.0 L236.2,126.0 L232.9,129.0 L232.2,136.0 L225.5,130.0 L220.8,129.0 L210.1,128.0 L201.4,129.5 L192.7,126.0 L187.4,128.0 L186.7,134.0 L176.0,130.0 L172.0,130.5 L170.0,135.0 L166.6,137.0 L163.9,142.0 L157.9,144.0 L154.6,152.0 L150.6,147.0 L141.9,146.0 L140.5,138.0 L137.2,138.0 L137.8,128.0 L132.5,123.0 L126.5,122.0 L110.4,123.0 L103.7,115.0 L87.7,102.0 L70.1,108.0 L70.3,145.0 L66.2,145.0 L61.6,138.0 L56.2,137.0 L46.8,140.0 L49.5,133.0 L46.8,130.0 L42.8,129.0 L38.8,126.0 L35.5,116.0 L32.1,112.0 L38.1,112.0 L36.8,105.0 L49.5,104.0 L50.9,97.0 L50.2,90.0 L42.8,88.0 L36.8,88.0 L28.1,92.0 Z"/>
+<path class="water" d="M188.0,102.0 L188.7,97.5 L194.0,91.0 L197.4,90.0 L207.4,91.5 L214.1,92.0 L220.8,90.0 L225.5,90.5 L224.2,94.0 L217.5,95.0 L209.4,95.0 L200.7,94.5 L197.4,97.5 L194.0,106.0 L190.7,108.0 Z"/>
+<path class="water" d="M90.3,94.0 L95.0,90.5 L101.0,90.0 L107.1,92.0 L104.4,96.5 L98.4,98.0 L93.0,97.5 Z"/>
+<path class="water" d="M85.6,102.0 L87.7,99.0 L91.0,102.0 L89.0,108.0 L85.6,110.0 L84.3,106.0 Z"/>
+<path class="water" d="M239.5,96.0 L242.9,93.0 L245.6,96.0 L243.6,100.0 L240.2,100.0 Z"/>
+<path class="water" d="M252.9,78.0 L256.9,75.0 L263.6,76.0 L261.6,79.5 L256.9,81.0 Z"/>
+<path class="river" d="M39.5,45.0 L38.8,56.0 L40.1,68.0 L42.8,85.0"/>
+<path class="river" d="M104.4,91.0 L113.8,98.0 L123.8,105.0 L133.8,109.5 L142.5,115.0 L151.9,125.0"/>
+<path class="river" d="M267.0,75.0 L250.9,64.0 L232.2,53.0 L214.1,38.0 L204.1,23.0"/>
+<path class="river" d="M158.6,12.0 L161.3,28.0 L169.3,42.0 L174.0,46.0 L153.9,56.0 L143.9,63.0"/>
+<path class="route go" style="--i:0" pathLength="1" d="M210.4,125.6 Q198.4,83.0 173.6,46.3"/>
+<path class="route go" style="--i:1" pathLength="1" d="M161.2,134.8 Q186.5,134.2 210.4,125.6"/>
+<path class="route go" style="--i:2" pathLength="1" d="M210.6,35.1 Q220.0,46.3 232.4,53.9"/>
+<path class="route load" style="--i:3" pathLength="1" d="M43.0,87.1 Q37.7,103.9 37.9,121.5"/>
+<path class="route load" style="--i:4" pathLength="1" d="M173.6,46.3 Q168.4,34.6 159.9,25.2"/>
+<path class="route late" style="--i:5" pathLength="1" d="M78.1,55.2 Q59.4,47.5 39.3,46.0"/>
+<path class="route plan" style="--i:6" pathLength="1" d="M184.6,59.9 Q165.2,67.2 149.0,80.2"/>
+<circle class="city big" cx="210.4" cy="125.6" r="3.4"/>
+<text class="label big" x="215.4" y="121.6">Алматы</text>
+<circle class="city big" cx="173.6" cy="46.3" r="3.4"/>
+<text class="label big" x="178.6" y="42.3">Астана</text>
+<circle class="city" cx="161.2" cy="134.8" r="2.4"/>
+<text class="label" x="166.2" y="130.8">Шымкент</text>
+<circle class="city" cx="184.6" cy="59.9" r="2.4"/>
+<text class="label" x="189.6" y="55.9">Қарағанды</text>
+<circle class="city" cx="78.1" cy="55.2" r="2.4"/>
+<text class="label" x="83.1" y="51.2">Ақтөбе</text>
+<circle class="city" cx="173.2" cy="129.0" r="2.4"/>
+<circle class="city" cx="210.6" cy="35.1" r="2.4"/>
+<text class="label" x="215.6" y="31.1">Павлодар</text>
+<circle class="city" cx="248.4" cy="58.5" r="2.4"/>
+<text class="label" x="253.4" y="54.5">Өскемен</text>
+<circle class="city" cx="232.4" cy="53.9" r="2.4"/>
+<text class="label" x="237.4" y="49.9">Семей</text>
+<circle class="city" cx="43.0" cy="87.1" r="2.4"/>
+<text class="label" x="48.0" y="83.1">Атырау</text>
+<circle class="city" cx="37.9" cy="121.5" r="2.4"/>
+<text class="label" x="42.9" y="117.5">Ақтау</text>
+<circle class="city" cx="39.3" cy="46.0" r="2.4"/>
+<text class="label" x="44.3" y="42.0">Орал</text>
+<circle class="city" cx="121.3" cy="25.9" r="2.4"/>
+<circle class="city" cx="158.2" cy="9.3" r="2.4"/>
+<circle class="city" cx="159.9" cy="25.2" r="2.4"/>
+<text class="label" x="164.9" y="21.2">Көкшетау</text>
+<circle class="city" cx="220.0" cy="107.8" r="2.4"/>
+<circle class="city" cx="152.2" cy="125.0" r="2.4"/>
+<circle class="city" cx="133.7" cy="109.5" r="2.4"/>
+<text class="label" x="138.7" y="105.5">Қызылорда</text>
+<circle class="city" cx="149.0" cy="80.2" r="2.4"/>
+<text class="label" x="154.0" y="76.2">Жезқазған</text>
+<circle class="city" cx="197.4" cy="89.5" r="2.4"/>
+<circle class="city" cx="183.8" cy="57.5" r="2.4"/>
+</svg>
+<!--/MAP-->
+      <div class="legend" aria-hidden="true">
+        <span style="--c: var(--green)">Жолда</span>
+        <span style="--c: var(--blue)">Жүктелуде</span>
+        <span style="--c: var(--amber)">Кешігуде</span>
+        <span style="--c: #8B95A7">Жоспарлы</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap showcase">
+    <figure class="window" style="margin: 0">
+      <div class="bar"><img src="img/icon.png" alt="">ЖеткізПро, басқару тақтасы<i></i></div>
+      <img src="img/02_dashboard.png" width="1560" height="940" alt="Басқару тақтасы: бүгінгі тапсырыстар, айлық шығын, курьерлер картасы мен мәртебесі">
+    </figure>
+  </div>
+
+  <section id="features" class="wrap">
+    <h2>Бағдарлама не істейді</h2>
+    <p>Барлық деректер бір SQLite дерекқорында сақталады. Көрсеткіштер мен графиктер осы деректерден есептеледі.</p>
+
+    <div class="feature">
+      <div class="text">
+        <h3>Тапсырыстар</h3>
+        <p>Тапсырысты қосу, іздеу, өңдеу және жою. Құны тариф бойынша автоматты есептеледі, мәртебенің әр өзгерісі тарихқа жазылады.</p>
+        <ul>
+          <li>Нөмір, клиент, телефон бойынша іздеу</li>
+          <li>Қала, мәртебе және кезең бойынша сүзгі</li>
+          <li>Excel және PDF форматында экспорт</li>
+        </ul>
+      </div>
+      <figure class="window" style="margin: 0"><img src="img/03_orders.png" width="1560" height="940" alt="Тапсырыстар кестесі" loading="lazy"></figure>
+    </div>
+
+    <div class="feature">
+      <div class="text">
+        <h3>Маршруттар</h3>
+        <p>Әр маршруттың аялдамалары, қашықтығы, жанармай мен жол ақысы картада көрінеді. «Ең жақын көрші» мен 2-opt әдісі аялдамалар ретін қысқартып, үнемделген километрді көрсетеді.</p>
+      </div>
+      <figure class="window" style="margin: 0"><img src="img/07_routes.png" width="1560" height="940" alt="Маршрут картасы мен аялдамалар" loading="lazy"></figure>
+    </div>
+
+    <div class="feature">
+      <div class="text">
+        <h3>Шешім қабылдау</h3>
+        <p>AHP жұптық салыстыру арқылы критерийлердің салмағын анықтап, сәйкестікті (CR) тексереді. TOPSIS курьерлерді рейтингке қояды, SAW нәтижені салыстырады.</p>
+        <ul>
+          <li>Барлық аралық кестелер көрінеді</li>
+          <li>Салмақтың сезімталдық графигі</li>
+          <li>Үздік курьерді бір батырмамен тағайындау</li>
+        </ul>
+      </div>
+      <figure class="window" style="margin: 0"><img src="img/10_decision.png" width="1560" height="940" alt="AHP матрицасы және TOPSIS рейтингі" loading="lazy"></figure>
+    </div>
+
+    <div class="feature">
+      <div class="text">
+        <h3>Жасанды интеллект</h3>
+        <p>Дерекқордағы 1 700-ден астам тапсырыста оқытылған модельдер жеткізу уақытын және кешігу қаупін болжайды. Әр болжамның қасында «Неге осындай нәтиже?» түсіндірмесі бар.</p>
+        <p>Модельдер үш түрлі деректер жинағында тексерілген: қалыпты маусым, қысқы шың және жаңа бағыттар.</p>
+      </div>
+      <figure class="window" style="margin: 0"><img src="img/11_ai.png" width="1560" height="940" alt="Кешігу қаупі бар тапсырыстар және болжам түсіндірмесі" loading="lazy"></figure>
+    </div>
+  </section>
+
+  <section id="install" class="install">
+    <div class="wrap">
+      <h2>Орнату</h2>
+      <p>Орнатқыш бағдарламаны пайдаланушы қалтасына қояды, сондықтан әкімші құпия сөзі сұралмайды.</p>
+      <ol class="steps">
+        <li><b>Жүктеу</b><p>ZhetkizPro-Setup-1.0.exe файлын жүктеп, ашыңыз.</p></li>
+        <li><b>Орнату</b><p>Шеберде «Далее», содан кейін «Установить» батырмасын басыңыз. Жұмыс үстеліне белгіше қосуға болады.</p></li>
+        <li><b>Іске қосу</b><p>Бірінші іске қосуда бағдарлама дерекқорды толтырып, модельдерді оқытады. Бұл шамамен 30 секунд алады.</p></li>
+      </ol>
+      <div class="note">Бағдарлама цифрлық қолтаңбасыз таратылады, сондықтан Windows «Компьютер защитил Windows» терезесін көрсетуі мүмкін. Онда «Подробнее», содан кейін «Выполнить в любом случае» басыңыз.</div>
+      <a class="download" href="https://github.com/omarselbai2006-jpg/zhetkizpro/releases/download/v1.0/ZhetkizPro-Setup-1.0.exe" download>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+        <span>Windows үшін жүктеу<small>Нұсқа 1.0, 81 МБ</small></span>
+      </a>
+    </div>
+  </section>
+
+  <section id="logins" class="wrap logins">
+    <h2>Демо-кіру</h2>
+    <p>Әр рөл өз бөлімдерін көреді. Кіру терезесінде пайдаланушының рөлін таңдаңыз.</p>
+    <div style="overflow-x: auto"><table>
+      <thead><tr><th>Логин</th><th>Құпия сөз</th><th>Рөлі</th><th>Бөлімдер</th></tr></thead>
+      <tbody>
+        <tr><td><code>aigerim.dispatcher</code></td><td><code>Admin123!</code></td><td>Диспетчер</td><td>Тапсырыстар, маршруттар, курьерлер</td></tr>
+        <tr><td><code>marat.manager</code></td><td><code>Admin123!</code></td><td>Менеджер</td><td>Қосымша: шығындар, шешімдер, ЖИ, есептер</td></tr>
+        <tr><td><code>dana.admin</code></td><td><code>Admin123!</code></td><td>Әкімші</td><td>Барлық бөлім, оның ішінде баптаулар</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <div class="wrap req">
+    <div>
+      <h3>Жүйе талаптары</h3>
+      <ul>
+        <li>Windows 10 немесе 11, 64-bit</li>
+        <li>4 ГБ жедел жады</li>
+        <li>Дискте 300 МБ бос орын</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Технологиялар</h3>
+      <ul>
+        <li>Python 3.12 және PySide6</li>
+        <li>SQLite дерекқоры</li>
+        <li>scikit-learn: RandomForest, GradientBoosting, IsolationForest</li>
+      </ul>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">«Жүйелік талдау және шешім қабылдау теориясы» пәні бойынша қорытынды жоба.</div>
+</footer>
+
+</body>
+</html>
